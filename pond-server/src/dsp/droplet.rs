@@ -5,7 +5,9 @@
 
 use bbx_dsp::{
     block::BlockId,
-    blocks::{EnvelopeBlock, GainBlock, LowPassFilterBlock, OscillatorBlock, PannerBlock, VcaBlock},
+    blocks::{
+        EnvelopeBlock, GainBlock, LowPassFilterBlock, OscillatorBlock, PannerBlock, VcaBlock,
+    },
     graph::{Graph, GraphBuilder},
     waveform::Waveform,
 };
@@ -67,8 +69,8 @@ impl DropletVoice {
 
         // Connect: osc -> VCA (audio), envelope -> VCA (control), VCA -> filter -> gain -> panner
         builder
-            .connect(oscillator_id, 0, vca_id, 0)  // Audio signal into VCA
-            .connect(envelope_id, 0, vca_id, 1)    // Envelope controls VCA amplitude
+            .connect(oscillator_id, 0, vca_id, 0) // Audio signal into VCA
+            .connect(envelope_id, 0, vca_id, 1) // Envelope controls VCA amplitude
             .connect(vca_id, 0, filter_id, 0)
             .connect(filter_id, 0, gain_id, 0)
             .connect(gain_id, 0, panner_id, 0);
@@ -88,7 +90,13 @@ impl DropletVoice {
     }
 
     /// Trigger the voice with a new droplet sound at an ambisonic position.
-    pub fn trigger(&mut self, graph: &mut Graph<f32>, frequency: f32, azimuth: f32, elevation: f32) {
+    pub fn trigger(
+        &mut self,
+        graph: &mut Graph<f32>,
+        frequency: f32,
+        azimuth: f32,
+        elevation: f32,
+    ) {
         // Set oscillator frequency
         if let Some(bbx_dsp::block::BlockType::Oscillator(osc)) =
             graph.get_block_mut(self.oscillator_id)
