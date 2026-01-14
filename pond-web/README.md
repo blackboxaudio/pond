@@ -1,38 +1,38 @@
-# sv
+# pond-web
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+Svelte 5 mobile PWA for the Pond installation. Provides a full-screen touch surface that sends tap coordinates to the server.
 
-## Creating a project
+## Development
 
-If you're seeing this, you've probably already done this step. Congrats!
-
-```sh
-# create a new project in the current directory
-npx sv create
-
-# create a new project in my-app
-npx sv create my-app
+```bash
+yarn install    # Install dependencies
+yarn dev        # Start dev server (Vite)
+yarn build      # Production build
+yarn check      # TypeScript + Svelte type checking
 ```
 
-## Developing
+## Environment Variables
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Create a `.env` file:
 
-```sh
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
+```env
+VITE_WS_URL=ws://192.168.1.100:8080
 ```
 
-## Building
+Replace the IP with your server's address on the local network.
 
-To create a production version of your app:
+## Features
 
-```sh
-npm run build
-```
+- **Full-screen touch surface**: Tap anywhere to trigger droplet sounds
+- **Multi-touch support**: Each finger creates a separate droplet
+- **Ripple animations**: Visual feedback on tap
+- **Auto-reconnect**: Automatically reconnects if connection drops
+- **Connection indicator**: Shows connection status
 
-You can preview the production build with `npm run preview`.
+## How It Works
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+1. User opens the PWA on their phone
+2. Enters the room code to connect
+3. Taps anywhere on the pond surface
+4. Touch coordinates are normalized (0-1) and sent via WebSocket
+5. Server synthesizes a spatialized droplet sound at that position
