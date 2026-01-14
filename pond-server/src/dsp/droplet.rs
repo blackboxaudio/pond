@@ -4,7 +4,7 @@
 //! Each voice has its own position for ambisonic encoding.
 
 use bbx_dsp::{
-    block::BlockId,
+    block::{Block, BlockId},
     blocks::{
         EnvelopeBlock, GainBlock, LowPassFilterBlock, OscillatorBlock, PannerBlock, VcaBlock,
     },
@@ -43,7 +43,7 @@ pub struct DropletVoice {
 impl DropletVoice {
     /// Create voice blocks and add them to the graph builder.
     /// Returns the voice with block IDs and the final output block ID.
-    pub fn create(builder: &mut GraphBuilder<f32>, base_frequency: f64) -> (Self, BlockId) {
+    pub fn create(builder: &mut GraphBuilder<f32>, base_frequency: f64, sample_rate: f64) -> (Self, BlockId) {
         // Oscillator: sine wave for clean droplet tone
         let oscillator_id = builder.add(OscillatorBlock::new(base_frequency, Waveform::Sine, None));
 
@@ -65,7 +65,10 @@ impl DropletVoice {
         let gain_id = builder.add(GainBlock::new(-6.0, None));
 
         // Panner: first-order ambisonic encoder (4 channels: W, Y, Z, X)
-        let panner_id = builder.add(PannerBlock::new_ambisonic(1));
+        // Use near-instant smoothing (0.01ms) for immediate position changes
+        let mut panner = PannerBlock::new_ambisonic(1);
+        panner.set_smoothing(sample_rate, 0.01);
+        let panner_id = builder.add(panner);
 
         // Connect: osc -> VCA (audio), envelope -> VCA (control), VCA -> filter -> gain -> panner
         builder
@@ -105,7 +108,8 @@ impl DropletVoice {
         }
 
         // Set ambisonic position (azimuth/elevation in degrees)
-        if let Some(bbx_dsp::block::BlockType::Panner(panner)) = graph.get_block_mut(self.panner_id)
+        if let Some(bbx_dsp::block::BlockType::Panner(panner)) =
+            graph.get_block_mut(self.panner_id)
         {
             panner.azimuth = bbx_dsp::parameter::Parameter::Constant(azimuth);
             panner.elevation = bbx_dsp::parameter::Parameter::Constant(elevation);
@@ -137,22 +141,37 @@ impl DropletVoice {
 /// Convert touch coordinates (0-1) to ambisonic spherical coordinates.
 /// Returns (azimuth, elevation) in degrees.
 ///
-/// Azimuth: -90° (right) to +90° (left), 0° = front
-/// Elevation: -15° (bottom) to +15° (top), 0° = horizon
+/// The listener is at virtual position (0.5, 0.5).
+/// Azimuth: 0° = front, +90° = left, -90° = right, ±180° = behind
+/// Elevation: fixed at 0° (horizontal plane)
 pub fn touch_to_ambisonic(x: f32, y: f32) -> (f32, f32) {
-    // X maps to azimuth: left edge = +90°, right edge = -90°
-    let azimuth = (0.5 - x) * 180.0;
+    let dx = x - 0.5;
+    let dy = y - 0.5;
 
-    // Y maps to elevation: top = +15°, bottom = -15°
-    let elevation = (0.5 - y) * 30.0;
+    let azimuth = f32::atan2(-dx, -dy).to_degrees();
+    let elevation = 0.0;
 
     (azimuth, elevation)
 }
 
-/// Generate a random droplet frequency based on y position.
-/// Higher y (bottom of screen) = lower frequency (bigger drops).
-pub fn touch_to_frequency(y: f32, rng: &mut impl Rng) -> f32 {
-    let base = 800.0 + (1.0 - y) * 1200.0; // 800-2000 Hz range
-    let variation = rng.gen_range(-100.0..100.0);
-    (base + variation).clamp(600.0, 2500.0)
+/// Musical frequencies: D major pentatonic scale across two octaves.
+const MUSICAL_FREQUENCIES: [f32; 10] = [
+    587.33,  // D5
+    659.26,  // E5
+    739.99,  // F#5
+    880.00,  // A5
+    987.77,  // B5
+    1174.66, // D6
+    1318.51, // E6
+    1479.98, // F#6
+    1760.00, // A6
+    1975.53, // B6
+];
+
+/// Generate a musical droplet frequency chosen randomly from the scale.
+pub fn touch_to_frequency(_y: f32, rng: &mut impl Rng) -> f32 {
+    let index = rng.gen_range(0..MUSICAL_FREQUENCIES.len());
+    let base = MUSICAL_FREQUENCIES[index];
+    let variation = rng.gen_range(-5.0..5.0);
+    base + variation
 }

@@ -21,9 +21,6 @@ use crate::dsp::{
     droplet::{touch_to_ambisonic, touch_to_frequency, DropletVoice},
 };
 
-/// Prefix for droplet trigger messages.
-const DROPLET_PREFIX: &str = "droplet:";
-
 pub struct PondSynth {
     graph: Graph<f32>,
     voices: Vec<DropletVoice>,
@@ -76,26 +73,9 @@ impl PondSynth {
                 continue;
             }
 
-            // Try to extract trigger name and parse droplet coordinates
-            // The param_hash is a hash of the trigger name, but we need the actual name
-            // to parse coordinates. For now, we'll use a workaround.
-            // TODO: Extend bbx_net to include the raw trigger name
-
-            // For the initial implementation, we'll trigger a droplet at a random position
-            // when any trigger is received. We'll refine this once we have the trigger name.
-            self.spawn_droplet(0.5, 0.5);
+            let (x, y) = msg.payload.coordinates().unwrap_or((0.5, 0.5));
+            self.spawn_droplet(x, y);
         }
-    }
-
-    /// Parse droplet trigger name to extract coordinates.
-    /// Format: "droplet:x,y" where x,y are floats 0-1.
-    #[allow(dead_code)]
-    fn parse_droplet_trigger(name: &str) -> Option<(f32, f32)> {
-        let coords = name.strip_prefix(DROPLET_PREFIX)?;
-        let mut parts = coords.split(',');
-        let x: f32 = parts.next()?.parse().ok()?;
-        let y: f32 = parts.next()?.parse().ok()?;
-        Some((x, y))
     }
 
     /// Spawn a new droplet at the given normalized coordinates.
@@ -107,8 +87,6 @@ impl PondSynth {
         let (azimuth, elevation) = touch_to_ambisonic(x, y);
 
         self.voices[voice_index].trigger(&mut self.graph, frequency, azimuth, elevation);
-
-        println!("Droplet: pos=({x:.2}, {y:.2}), freq={frequency:.0}Hz, az={azimuth:.0}°, el={elevation:.0}°");
     }
 
     /// Find an available voice, or steal the oldest active one.
