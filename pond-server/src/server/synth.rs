@@ -18,7 +18,7 @@ use rodio::Source;
 
 use crate::dsp::{
     build_graph,
-    droplet::{touch_to_frequency, touch_to_pan, DropletVoice},
+    droplet::{touch_to_ambisonic, touch_to_frequency, DropletVoice},
 };
 
 /// Prefix for droplet trigger messages.
@@ -104,11 +104,11 @@ impl PondSynth {
         let voice_index = self.find_voice();
 
         let frequency = touch_to_frequency(y, &mut self.rng);
-        let pan = touch_to_pan(x);
+        let (azimuth, elevation) = touch_to_ambisonic(x, y);
 
-        self.voices[voice_index].trigger(&mut self.graph, frequency, pan);
+        self.voices[voice_index].trigger(&mut self.graph, frequency, azimuth, elevation);
 
-        println!("Droplet: pos=({x:.2}, {y:.2}), freq={frequency:.0}Hz, pan={pan:.0}");
+        println!("Droplet: pos=({x:.2}, {y:.2}), freq={frequency:.0}Hz, az={azimuth:.0}°, el={elevation:.0}°");
     }
 
     /// Find an available voice, or steal the oldest active one.

@@ -8,8 +8,8 @@ mod server;
 
 use std::{
     sync::{
-        Arc,
         atomic::{AtomicBool, Ordering},
+        Arc,
     },
     thread,
     time::Duration,
@@ -66,7 +66,12 @@ fn main() {
         let rt = tokio::runtime::Runtime::new().expect("Failed to create tokio runtime");
 
         rt.block_on(async {
-            // Create room (server generates the code)
+            let server_handle = tokio::spawn(async move {
+                let _ = ws_server.run().await;
+            });
+
+            tokio::time::sleep(tokio::time::Duration::from_millis(50)).await;
+
             let (response_tx, response_rx) = tokio::sync::oneshot::channel();
             let _ = command_tx_clone
                 .send(ServerCommand::CreateRoom {
@@ -85,7 +90,7 @@ fn main() {
                 }
             }
 
-            let _ = ws_server.run().await;
+            let _ = server_handle.await;
         });
 
         server_running.store(false, Ordering::SeqCst);
