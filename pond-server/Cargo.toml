@@ -1,0 +1,14 @@
+[package]
+name = "pond-server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bbx_dsp = { path = "../../bbx_audio/bbx_dsp" }
+bbx_net = { path = "../../bbx_audio/bbx_net", features = ["websocket"] }
+
+rodio = "0.20"
+tokio = { version = "1", features = ["full"] }
+ctrlc = "3.4"
+rand = "0.8"
+rand_chacha = "0.3"
