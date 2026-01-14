@@ -34,14 +34,13 @@ pond/
 
 - Rust (edition 2021)
 - Node.js + Yarn
-- [bbx_audio](https://github.com/your-org/bbx_audio) workspace at `../../bbx_audio/`
 
 ### Running
 
 1. Start the server:
    ```bash
    cd pond-server
-   cargo run
+   cargo run --release
    ```
 
 2. Start the web app:
