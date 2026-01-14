@@ -1,7 +1,7 @@
 /**
  * Connection store - manages WebSocket connection to pond-server.
  */
-import { BbxClient } from '@bbx-audio/net'
+import { BbxClient, type ConnectionState } from '@bbx-audio/net'
 
 function getWebSocketUrl(): string {
     if (import.meta.env.VITE_WS_URL) {
@@ -10,8 +10,6 @@ function getWebSocketUrl(): string {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
     return `${protocol}//${window.location.hostname}:8080`
 }
-
-export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting'
 
 let connectionState = $state<ConnectionState>('disconnected')
 let client: BbxClient | null = $state(null)
@@ -85,3 +83,4 @@ export function getError() {
 }
 
 export { connect, disconnect, trigger }
+export type { ConnectionState }
