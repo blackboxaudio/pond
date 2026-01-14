@@ -43,7 +43,11 @@ pub struct DropletVoice {
 impl DropletVoice {
     /// Create voice blocks and add them to the graph builder.
     /// Returns the voice with block IDs and the final output block ID.
-    pub fn create(builder: &mut GraphBuilder<f32>, base_frequency: f64, sample_rate: f64) -> (Self, BlockId) {
+    pub fn create(
+        builder: &mut GraphBuilder<f32>,
+        base_frequency: f64,
+        sample_rate: f64,
+    ) -> (Self, BlockId) {
         // Oscillator: sine wave for clean droplet tone
         let oscillator_id = builder.add(OscillatorBlock::new(base_frequency, Waveform::Sine, None));
 
@@ -108,8 +112,7 @@ impl DropletVoice {
         }
 
         // Set ambisonic position (azimuth/elevation in degrees)
-        if let Some(bbx_dsp::block::BlockType::Panner(panner)) =
-            graph.get_block_mut(self.panner_id)
+        if let Some(bbx_dsp::block::BlockType::Panner(panner)) = graph.get_block_mut(self.panner_id)
         {
             panner.azimuth = bbx_dsp::parameter::Parameter::Constant(azimuth);
             panner.elevation = bbx_dsp::parameter::Parameter::Constant(elevation);

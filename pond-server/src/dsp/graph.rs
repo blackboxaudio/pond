@@ -52,13 +52,20 @@ pub fn build_graph() -> (Graph<f32>, Vec<DropletVoice>, BlockId) {
 
     let master_mixer_id =
         builder.add(MixerBlock::new(2, 4).with_normalization(NormalizationStrategy::Average));
+    // Connect submixers to master mixer in grouped order (not interleaved).
+    // MixerBlock expects inputs as [src0-ch0..3, src1-ch0..3], so we must add
+    // all submixer_a connections first, then all submixer_b connections.
     for ch in 0..4 {
         builder.connect(submixer_a_id, ch, master_mixer_id, ch);
+    }
+    for ch in 0..4 {
         builder.connect(submixer_b_id, ch, master_mixer_id, 4 + ch);
     }
 
-    let decoder_id =
-        builder.add(BinauralDecoderBlock::with_strategy(1, BinauralStrategy::Matrix));
+    let decoder_id = builder.add(BinauralDecoderBlock::with_strategy(
+        1,
+        BinauralStrategy::Matrix,
+    ));
 
     for ch in 0..4 {
         builder.connect(master_mixer_id, ch, decoder_id, ch);
