@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bbx_dsp = { path = "../../bbx_audio/bbx_dsp" }
-bbx_net = { path = "../../bbx_audio/bbx_net", features = ["websocket"] }
+bbx_dsp = { version = "0.4.2", features = ["ftz-daz", "simd"] }
+bbx_net = { version = "0.4.2", features = ["websocket"] }
 
 rodio = "0.20"
 tokio = { version = "1", features = ["full"] }

@@ -47,11 +47,15 @@ checksum = "c08606f8c3cbf4ce6ec8e28fb0014a2c086708fe954eaa885384a6165172e7e8"
 
 [[package]]
 name = "bbx_core"
-version = "0.4.1"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0eeadae0a1ae3954950c287ec3606ac16aebecd5693e8b8fe8b640bbc1f4383c"
 
 [[package]]
 name = "bbx_dsp"
-version = "0.4.1"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "501cc87dd1174765e12631a36bfffd4ed72a66325bfd6f9ec7af9b83037e9eb4"
 dependencies = [
  "bbx_core",
  "bbx_midi",
@@ -59,14 +63,18 @@ dependencies = [
 
 [[package]]
 name = "bbx_midi"
-version = "0.4.1"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80fd023c719b63047692cf03fe8e6924717ddace6b2018434040af2f88f8e1eb"
 dependencies = [
  "bbx_core",
 ]
 
 [[package]]
 name = "bbx_net"
-version = "0.4.1"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb8ab8917f7ea8cc0cb89bc0e2655bde23d17c5f1674843eff9e2a16e879a52a"
 dependencies = [
  "bbx_core",
  "futures-util",
