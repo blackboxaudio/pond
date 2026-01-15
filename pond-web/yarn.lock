@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@bbx-audio/net@0.4.2":
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/@bbx-audio/net/-/net-0.4.2.tgz#fc75a2fbf43772b6ea79bcacb1ac6911fbf3d5b4"
-  integrity sha512-aDSM5REarjeawiMUmqwjULgAiwGmxfQLwPf5VDKkBPu0V3t7BoYVX00w6YzyeDG0PawCM/QKdVuubh4UMj5smA==
+"@bbx-audio/net@0.4.3":
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/@bbx-audio/net/-/net-0.4.3.tgz#f51c00bc234471e2b337404bd3d4a8a288111c36"
+  integrity sha512-JpN9hcNyiDlMdn8Oe91cWG1XJBzRY7/r0I43TiUWxrb8xYdn8n2rgVaK0c5Kj2eu8qL650S1yhQIq3zvidg/pw==
 
 "@esbuild/aix-ppc64@0.25.12":
   version "0.25.12"
