@@ -35,6 +35,12 @@ pond/
 - Rust (edition 2021)
 - Node.js + Yarn
 
+### Linux Dependencies
+
+```bash
+sudo apt install libasound2-dev libssl-dev pkg-config
+```
+
 ### Running
 
 1. Start the server:
