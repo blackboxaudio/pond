@@ -26,7 +26,7 @@ const RELEASE_TIME: f64 = 0.1;
 const VOICE_LIFETIME_BUFFERS: u64 = 30;
 
 /// A single droplet voice with oscillator, envelope, VCA, filter, and panner.
-pub struct DropletVoice {
+pub struct Voice {
     pub oscillator_id: BlockId,
     pub envelope_id: BlockId,
     #[allow(dead_code)]
@@ -40,7 +40,7 @@ pub struct DropletVoice {
     pub age: u64,
 }
 
-impl DropletVoice {
+impl Voice {
     /// Create voice blocks and add them to the graph builder.
     /// Returns the voice with block IDs and the final output block ID.
     pub fn create(
@@ -48,10 +48,8 @@ impl DropletVoice {
         base_frequency: f64,
         sample_rate: f64,
     ) -> (Self, BlockId) {
-        // Oscillator: sine wave for clean droplet tone
         let oscillator_id = builder.add(OscillatorBlock::new(base_frequency, Waveform::Sine, None));
 
-        // Envelope: fast attack (~5ms), medium decay (~200ms), no sustain
         let envelope_id = builder.add(EnvelopeBlock::new(
             ATTACK_TIME,
             DECAY_TIME,
@@ -59,25 +57,19 @@ impl DropletVoice {
             RELEASE_TIME,
         ));
 
-        // VCA: multiplies oscillator by envelope for amplitude modulation
         let vca_id = builder.add(VcaBlock::new());
 
-        // Low-pass filter: slight resonance for "plop" character
         let filter_id = builder.add(LowPassFilterBlock::new(2000.0, 1.5));
 
-        // Per-voice gain
         let gain_id = builder.add(GainBlock::new(-6.0, None));
 
-        // Panner: first-order ambisonic encoder (4 channels: W, Y, Z, X)
-        // Use near-instant smoothing (0.01ms) for immediate position changes
         let mut panner = PannerBlock::new_ambisonic(1);
         panner.set_smoothing(sample_rate, 0.01);
         let panner_id = builder.add(panner);
 
-        // Connect: osc -> VCA (audio), envelope -> VCA (control), VCA -> filter -> gain -> panner
         builder
-            .connect(oscillator_id, 0, vca_id, 0) // Audio signal into VCA
-            .connect(envelope_id, 0, vca_id, 1) // Envelope controls VCA amplitude
+            .connect(oscillator_id, 0, vca_id, 0)
+            .connect(envelope_id, 0, vca_id, 1)
             .connect(vca_id, 0, filter_id, 0)
             .connect(filter_id, 0, gain_id, 0)
             .connect(gain_id, 0, panner_id, 0);
@@ -104,21 +96,18 @@ impl DropletVoice {
         azimuth: f32,
         elevation: f32,
     ) {
-        // Set oscillator frequency
         if let Some(bbx_dsp::block::BlockType::Oscillator(osc)) =
             graph.get_block_mut(self.oscillator_id)
         {
             osc.set_midi_frequency(frequency);
         }
 
-        // Set ambisonic position (azimuth/elevation in degrees)
         if let Some(bbx_dsp::block::BlockType::Panner(panner)) = graph.get_block_mut(self.panner_id)
         {
             panner.azimuth = bbx_dsp::parameter::Parameter::Constant(azimuth);
             panner.elevation = bbx_dsp::parameter::Parameter::Constant(elevation);
         }
 
-        // Trigger envelope
         if let Some(bbx_dsp::block::BlockType::Envelope(env)) =
             graph.get_block_mut(self.envelope_id)
         {
@@ -130,7 +119,6 @@ impl DropletVoice {
     }
 
     /// Check if the voice has finished playing based on elapsed time.
-    /// Since envelope stage is private, we estimate based on lifetime.
     pub fn is_finished(&self) -> bool {
         self.age >= VOICE_LIFETIME_BUFFERS
     }
@@ -143,10 +131,6 @@ impl DropletVoice {
 
 /// Convert touch coordinates (0-1) to ambisonic spherical coordinates.
 /// Returns (azimuth, elevation) in degrees.
-///
-/// The listener is at virtual position (0.5, 0.5).
-/// Azimuth: 0° = front, +90° = left, -90° = right, ±180° = behind
-/// Elevation: fixed at 0° (horizontal plane)
 pub fn touch_to_ambisonic(x: f32, y: f32) -> (f32, f32) {
     let dx = x - 0.5;
     let dy = y - 0.5;

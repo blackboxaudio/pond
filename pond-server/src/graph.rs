@@ -10,11 +10,11 @@ use bbx_dsp::{
     graph::{Graph, GraphBuilder},
 };
 
-use super::droplet::{DropletVoice, NUM_VOICES};
+use crate::voice::{Voice, NUM_VOICES};
 
 /// Build the complete DSP graph with voice pool and binaural decoder.
 /// Returns (graph, voices, decoder_id).
-pub fn build_graph() -> (Graph<f32>, Vec<DropletVoice>, BlockId) {
+pub fn build_graph() -> (Graph<f32>, Vec<Voice>, BlockId) {
     let sample_rate = DEFAULT_SAMPLE_RATE;
     let buffer_size = DEFAULT_BUFFER_SIZE;
     let num_channels = 2;
@@ -26,7 +26,7 @@ pub fn build_graph() -> (Graph<f32>, Vec<DropletVoice>, BlockId) {
 
     for i in 0..NUM_VOICES {
         let base_freq = 1000.0 + (i as f64 * 50.0);
-        let (voice, output_id) = DropletVoice::create(&mut builder, base_freq, sample_rate);
+        let (voice, output_id) = Voice::create(&mut builder, base_freq, sample_rate);
         voices.push(voice);
         voice_outputs.push(output_id);
     }
@@ -52,9 +52,7 @@ pub fn build_graph() -> (Graph<f32>, Vec<DropletVoice>, BlockId) {
 
     let master_mixer_id =
         builder.add(MixerBlock::new(2, 4).with_normalization(NormalizationStrategy::Average));
-    // Connect submixers to master mixer in grouped order (not interleaved).
-    // MixerBlock expects inputs as [src0-ch0..3, src1-ch0..3], so we must add
-    // all submixer_a connections first, then all submixer_b connections.
+
     for ch in 0..4 {
         builder.connect(submixer_a_id, ch, master_mixer_id, ch);
     }

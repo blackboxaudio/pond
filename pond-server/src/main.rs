@@ -1,11 +1,12 @@
 //! Pond - Ambisonic Water Droplet Installation Server
 //!
 //! A WebSocket server that responds to touch triggers from mobile devices
-//! and plays spatialized water droplet sounds through an ambisonic speaker array.
+//! and plays spatialized water droplet sounds using bbx_player for audio output.
 
-mod dsp;
+mod graph;
 mod server;
-mod synth;
+mod signal;
+mod voice;
 
 use std::{
     sync::{
@@ -17,9 +18,10 @@ use std::{
 };
 
 use bbx_net::websocket::ServerCommand;
-use rodio::{OutputStream, Source};
+use bbx_player::{backends::RodioBackend, Backend};
 
-use synth::PondSynth;
+use graph::build_graph;
+use signal::PondSignal;
 
 fn main() {
     println!("Pond - Ambisonic Water Droplet Installation");
@@ -38,24 +40,37 @@ fn main() {
     println!("\nWaiting for touch triggers...");
     println!("Press Ctrl+C to exit.\n");
 
-    let synth = PondSynth::new(consumer);
+    let (graph, voices, _decoder_id) = build_graph();
 
-    let (_stream, stream_handle) = match OutputStream::try_default() {
-        Ok(result) => result,
+    let stop_flag = Arc::new(AtomicBool::new(false));
+
+    let signal = PondSignal::new(graph, voices, consumer, Arc::clone(&stop_flag));
+    let sample_rate = signal.sample_rate();
+    let num_channels = signal.num_channels();
+
+    let backend = match RodioBackend::try_default() {
+        Ok(backend) => backend,
         Err(e) => {
-            println!("Failed to open audio output: {e}");
+            eprintln!("Failed to create audio backend: {e}");
             return;
         }
     };
 
-    if let Err(e) = stream_handle.play_raw(synth.convert_samples()) {
-        println!("Failed to start audio playback: {e}");
+    if let Err(e) = Box::new(backend).play(
+        Box::new(signal),
+        sample_rate,
+        num_channels,
+        Arc::clone(&stop_flag),
+    ) {
+        eprintln!("Failed to start audio playback: {e}");
         return;
     }
 
     while running.load(Ordering::SeqCst) {
         thread::sleep(Duration::from_millis(100));
     }
+
+    stop_flag.store(true, Ordering::SeqCst);
 
     let _ = command_tx.blocking_send(ServerCommand::Shutdown);
 
