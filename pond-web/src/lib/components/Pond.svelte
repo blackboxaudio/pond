@@ -12,10 +12,6 @@
 
     const connectionState = $derived(getConnectionState())
 
-    const TOUCH_DEBOUNCE_MS = 150
-    const touchLastTrigger = new Map<number, number>()
-    let lastTouchTime = 0
-
     function spawnRipple(x: number, y: number) {
         const id = rippleId++
         ripples.push({ id, x, y })
@@ -26,33 +22,7 @@
         }, 1500)
     }
 
-    function handleTouchStart(event: TouchEvent) {
-        event.preventDefault()
-        lastTouchTime = performance.now()
-
-        for (const touch of event.changedTouches) {
-            const lastTrigger = touchLastTrigger.get(touch.identifier) ?? 0
-            if (lastTouchTime - lastTrigger < TOUCH_DEBOUNCE_MS) continue
-
-            touchLastTrigger.set(touch.identifier, lastTouchTime)
-
-            const x = touch.clientX / window.innerWidth
-            const y = touch.clientY / window.innerHeight
-
-            trigger(`droplet:${x.toFixed(4)},${y.toFixed(4)}`)
-            spawnRipple(touch.clientX, touch.clientY)
-        }
-    }
-
-    function handleTouchEnd(event: TouchEvent) {
-        for (const touch of event.changedTouches) {
-            touchLastTrigger.delete(touch.identifier)
-        }
-    }
-
-    function handleClick(event: MouseEvent) {
-        if (performance.now() - lastTouchTime < 500) return
-
+    function handlePointerDown(event: PointerEvent) {
         const x = event.clientX / window.innerWidth
         const y = event.clientY / window.innerHeight
 
@@ -78,9 +48,7 @@
     class="pond"
     role="button"
     tabindex="0"
-    ontouchstart={handleTouchStart}
-    ontouchend={handleTouchEnd}
-    onclick={handleClick}
+    onpointerdown={handlePointerDown}
     onkeydown={handleKeydown}
 >
     <!-- Connection status indicator -->
