@@ -4,9 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bbx_dsp = { version = "0.4.3", features = ["ftz-daz", "simd"] }
-bbx_net = { version = "0.4.3", features = ["websocket"] }
-bbx_player = { version = "0.4.3", features = ["rodio"] }
+bbx_core = { path = "../../bbx_audio/bbx_core" }
+bbx_dsp = { path = "../../bbx_audio/bbx_dsp", features = ["ftz-daz", "simd"] }
+bbx_net = { path = "../../bbx_audio/bbx_net", features = ["websocket"] }
+bbx_player = { path = "../../bbx_audio/bbx_player", features = ["rodio"] }
 
 tokio = { version = "1", features = ["full"] }
 ctrlc = "3.4"

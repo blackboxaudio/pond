@@ -8,11 +8,13 @@ use std::sync::{
     Arc,
 };
 
+use bbx_core::StackVec;
 use bbx_dsp::{
     buffer::{AudioBuffer, Buffer},
-    graph::Graph,
+    graph::{Graph, MAX_BLOCK_OUTPUTS},
 };
 use bbx_net::{NetBufferConsumer, NetMessageType};
+use bbx_player::Source;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 
@@ -69,14 +71,6 @@ impl PondSignal {
         }
     }
 
-    pub fn sample_rate(&self) -> u32 {
-        self.sample_rate
-    }
-
-    pub fn num_channels(&self) -> u16 {
-        self.num_channels as u16
-    }
-
     fn process_net_events(&mut self) {
         let events = self.net_consumer.drain_into_stack();
 
@@ -127,12 +121,11 @@ impl PondSignal {
             }
         }
 
-        let mut output_refs: Vec<&mut [f32]> = self
-            .output_buffers
-            .iter_mut()
-            .map(|b| b.as_mut_slice())
-            .collect();
-        self.graph.process_buffers(&mut output_refs);
+        let mut output_refs: StackVec<&mut [f32], MAX_BLOCK_OUTPUTS> = StackVec::new();
+        for buf in self.output_buffers.iter_mut() {
+            let _ = output_refs.push(buf.as_mut_slice());
+        }
+        self.graph.process_buffers(output_refs.as_mut_slice());
     }
 
     fn next_sample(&mut self) -> f32 {
@@ -164,4 +157,12 @@ impl Iterator for PondSignal {
     }
 }
 
-unsafe impl Send for PondSignal {}
+impl Source<f32> for PondSignal {
+    fn channels(&self) -> u16 {
+        self.num_channels as u16
+    }
+
+    fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+}

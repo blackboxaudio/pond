@@ -45,8 +45,6 @@ fn main() {
     let stop_flag = Arc::new(AtomicBool::new(false));
 
     let signal = PondSignal::new(graph, voices, consumer, Arc::clone(&stop_flag));
-    let sample_rate = signal.sample_rate();
-    let num_channels = signal.num_channels();
 
     let backend = match RodioBackend::try_default() {
         Ok(backend) => backend,
@@ -56,12 +54,7 @@ fn main() {
         }
     };
 
-    if let Err(e) = Box::new(backend).play(
-        Box::new(signal),
-        sample_rate,
-        num_channels,
-        Arc::clone(&stop_flag),
-    ) {
+    if let Err(e) = Box::new(backend).play(Box::new(signal), Arc::clone(&stop_flag)) {
         eprintln!("Failed to start audio playback: {e}");
         return;
     }
